@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// role: "EMPLOYER" | "APPLICANT"
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         String
+  company      String?       // employers only
+  createdAt    DateTime      @default(now())
+  jobs         Job[]
+  applications Application[]
+}
+
+// jobType:   FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP
+// workMode:  ONSITE | REMOTE | HYBRID
+// experience: ENTRY | MID | SENIOR
+// status:    OPEN | CLOSED
+model Job {
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  location     String
+  jobType      String
+  workMode     String
+  experience   String
+  salaryMin    Int?
+  salaryMax    Int?
+  skills       String        @default("") // comma-separated
+  status       String        @default("OPEN")
+  deadline     DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  employerId   String
+  employer     User          @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([status, createdAt])
+  @@index([employerId])
+}
+
+// status: SUBMITTED | REVIEWING | SHORTLISTED | REJECTED | HIRED
+model Application {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantId String
+  applicant   User     @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  phone       String?
+  coverLetter String   @default("")
+  resumePath  String   // stored file name inside uploads/resumes
+  resumeName  String   // original file name
+  resumeMime  String
+  resumeSize  Int
+  status      String   @default("SUBMITTED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([jobId, applicantId])
+  @@index([applicantId])
+}
