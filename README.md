@@ -1,5 +1,7 @@
 # JobPortal — Next.js Job Portal
 
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+
 A full-stack job portal built with **Next.js 15 (App Router)**, **Prisma** and **SQLite**.
 
 - **Employers** post, edit, close/reopen and delete vacancies, review applicants, open/download resumes and move applications through a hiring pipeline.
@@ -35,6 +37,15 @@ npm run dev                 # http://localhost:3000
 | Employer (Acme Technologies) | `hr@acme.com` |
 | Employer (Nimbus Cloud) | `talent@nimbus.io` |
 | Applicant | `applicant@example.com` |
+
+## Environment variables
+
+Copy `.env.example` to `.env`.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DATABASE_URL` | Database connection string | `file:./dev.db` |
+| `SESSION_SECRET` | Secret for signing session cookies. Use a long random string | placeholder |
 
 ## Features
 
