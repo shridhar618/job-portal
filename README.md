@@ -102,6 +102,14 @@ uploads/resumes/          # stored resumes (git-ignored)
 
 Browse the data with `npm run db:studio`.
 
+## Demo mode (no database)
+
+If `DATABASE_URL` is not set, the app starts in **demo mode**: it runs an in-memory Postgres ([PGlite](https://pglite.dev)) inside the server, creates the tables, and loads the demo jobs and accounts (`prisma/demo-data.mjs`). A banner at the top says so.
+
+Browsing, searching and logging in with the demo accounts work everywhere. Anything you create (accounts, jobs, applications, resumes) is **temporary**: each server instance keeps its own copy, and it's reset when the instance restarts. On Vercel, the resume download route can run on a different instance from the pages, so resumes often can't be opened in demo mode.
+
+Set `DATABASE_URL` (see below) to switch to a real database. After changing `prisma/schema.prisma`, run `npm run demo:schema` to update the demo tables.
+
 ## Deploying to Vercel
 
 1. **Create a database.** Make a free Postgres database on [Neon](https://neon.tech) (or Supabase).

@@ -10,17 +10,20 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "setup": "prisma db push && prisma db seed"
+    "setup": "prisma db push && prisma db seed",
+    "demo:schema": "node scripts/gen-demo-schema.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.6.0",
     "@prisma/client": "^6.16.0",
     "@vercel/blob": "^2.9.0",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",
     "next": "^15.5.0",
+    "pglite-prisma-adapter": "^0.6.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

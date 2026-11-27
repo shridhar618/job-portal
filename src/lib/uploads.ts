@@ -5,12 +5,16 @@ import { put, get, del } from "@vercel/blob";
 import { MAX_RESUME_BYTES } from "./constants";
 
 // Where resumes live:
-// - On Vercel (or whenever BLOB_READ_WRITE_TOKEN is set): a *private* Vercel Blob store.
+// - When a Vercel Blob store is connected: a *private* Vercel Blob store.
 //   Private blobs can't be opened by URL, so files stay reachable only through the
 //   authorised download route.
-// - Locally without a token: uploads/resumes/ on disk (outside /public, same reason).
-export const UPLOAD_DIR = path.join(process.cwd(), "uploads", "resumes");
-const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
+// - Locally without a store: uploads/resumes/ on disk (outside /public, same reason).
+// - On Vercel without a Blob store (demo mode): /tmp, the only writable folder. Temporary.
+export const UPLOAD_DIR = process.env.VERCEL
+  ? path.join("/tmp", "uploads", "resumes")
+  : path.join(process.cwd(), "uploads", "resumes");
+// A connected Blob store sets BLOB_STORE_ID (private stores, OIDC auth) or BLOB_READ_WRITE_TOKEN.
+const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 const blobPath = (storedName: string) => `resumes/${storedName}`;
 
 const ALLOWED: Record<string, string> = {

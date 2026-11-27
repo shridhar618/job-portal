@@ -1,0 +1,10 @@
+# Keep local-only files out of `vercel deploy` uploads.
+# Settings for the live site come from Vercel's Environment Variables, not .env files.
+.env
+.env.*
+!.env.example
+prisma/*.db
+prisma/*.db-journal
+uploads/resumes/*
+!uploads/resumes/.gitkeep
+.DS_Store
