@@ -8,3 +8,6 @@ uploads/resumes/*
 !uploads/resumes/.gitkeep
 next-env.d.ts
 *.tsbuildinfo
+.vercel
+.env*
+!.env.example
