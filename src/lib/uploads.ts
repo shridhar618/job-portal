@@ -1,10 +1,17 @@
 import { mkdir, writeFile, readFile, unlink } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { put, get, del } from "@vercel/blob";
 import { MAX_RESUME_BYTES } from "./constants";
 
-// Stored outside /public so files are only reachable through the authorised download route
+// Where resumes live:
+// - On Vercel (or whenever BLOB_READ_WRITE_TOKEN is set): a *private* Vercel Blob store.
+//   Private blobs can't be opened by URL, so files stay reachable only through the
+//   authorised download route.
+// - Locally without a token: uploads/resumes/ on disk (outside /public, same reason).
 export const UPLOAD_DIR = path.join(process.cwd(), "uploads", "resumes");
+const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
+const blobPath = (storedName: string) => `resumes/${storedName}`;
 
 const ALLOWED: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -31,7 +38,7 @@ export async function saveResume(file: File | null): Promise<{ ok: true; resume:
     return { ok: false, error: "Please attach your resume." };
   }
   if (file.size > MAX_RESUME_BYTES) {
-    return { ok: false, error: "Resume must be 5 MB or smaller." };
+    return { ok: false, error: `Resume must be ${MAX_RESUME_BYTES / (1024 * 1024)} MB or smaller.` };
   }
   const ext = path.extname(file.name).toLowerCase();
   const mime = ALLOWED[ext];
@@ -43,27 +50,46 @@ export async function saveResume(file: File | null): Promise<{ ok: true; resume:
     return { ok: false, error: "That file doesn't look like a valid PDF/DOC/DOCX document." };
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
   const storedName = `${crypto.randomUUID()}${ext}`;
-  await writeFile(path.join(UPLOAD_DIR, storedName), buffer);
+  if (useBlob()) {
+    await put(blobPath(storedName), buffer, { access: "private", contentType: mime, addRandomSuffix: false });
+  } else {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+    await writeFile(path.join(UPLOAD_DIR, storedName), buffer);
+  }
 
   const originalName = path.basename(file.name).replace(/[^\w.\- ()]/g, "_").slice(0, 120);
   return { ok: true, resume: { storedName, originalName, mime, size: file.size } };
 }
 
-function safePath(storedName: string) {
+function checkName(storedName: string) {
   // storedName is always "<uuid>.<ext>" — reject anything else to prevent path traversal
   if (!/^[0-9a-f-]{36}\.(pdf|docx?)$/i.test(storedName)) throw new Error("Invalid file name");
+}
+
+function safePath(storedName: string) {
+  checkName(storedName);
   return path.join(UPLOAD_DIR, storedName);
 }
 
 export async function readResume(storedName: string): Promise<Buffer> {
+  if (useBlob()) {
+    checkName(storedName);
+    const res = await get(blobPath(storedName), { access: "private" });
+    if (!res || res.statusCode !== 200) throw new Error("File missing");
+    return Buffer.from(await new Response(res.stream).arrayBuffer());
+  }
   return readFile(safePath(storedName));
 }
 
 export async function deleteResume(storedName: string): Promise<void> {
   try {
-    await unlink(safePath(storedName));
+    if (useBlob()) {
+      checkName(storedName);
+      await del(blobPath(storedName));
+    } else {
+      await unlink(safePath(storedName));
+    }
   } catch {
     // file already gone — nothing to do
   }

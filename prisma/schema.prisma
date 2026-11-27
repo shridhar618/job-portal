@@ -2,9 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// PostgreSQL (e.g. Neon or Supabase). DATABASE_URL = pooled connection (used by the app),
+// DIRECT_URL = direct connection (used by `prisma db push`). Both can be the same string.
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // role: "EMPLOYER" | "APPLICANT"
@@ -56,7 +59,7 @@ model Application {
   applicant   User     @relation(fields: [applicantId], references: [id], onDelete: Cascade)
   phone       String?
   coverLetter String   @default("")
-  resumePath  String   // stored file name inside uploads/resumes
+  resumePath  String   // stored file name ("<uuid>.<ext>") in Vercel Blob or uploads/resumes
   resumeName  String   // original file name
   resumeMime  String
   resumeSize  Int

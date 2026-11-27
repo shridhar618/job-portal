@@ -1,12 +1,12 @@
 # JobPortal — Next.js Job Portal
 
-![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)
 
-A full-stack job portal built with **Next.js 15 (App Router)**, **Prisma** and **SQLite**.
+A full-stack job portal built with **Next.js 15 (App Router)**, **Prisma** and **PostgreSQL**, ready to deploy on **Vercel**.
 
 - **Employers** post, edit, close/reopen and delete vacancies, review applicants, open/download resumes and move applications through a hiring pipeline.
 - **Applicants** search and filter jobs, apply with a resume upload (PDF/DOC/DOCX), and track or withdraw their applications.
-- Jobs, users and applications are stored in a database; resumes are stored on disk outside `public/` and served only to authorised users.
+- Jobs, users and applications are stored in a database; resumes are stored in a private Vercel Blob store (or on disk locally) and served only to authorised users.
 
 ## Tech stack
 
@@ -14,9 +14,9 @@ A full-stack job portal built with **Next.js 15 (App Router)**, **Prisma** and *
 |---|---|
 | Framework | Next.js 15 App Router, React 19, TypeScript |
 | Mutations | Server Actions (`useActionState`) |
-| Database | SQLite via Prisma ORM (switchable to PostgreSQL/MySQL) |
+| Database | PostgreSQL via Prisma ORM (Neon / Supabase free tier works) |
 | Auth | Email + password (bcrypt), signed JWT session cookie (`jose`), role-based access |
-| File upload | Server Action → `uploads/resumes/`, type + magic-byte validation, 5 MB limit |
+| File upload | Server Action → private Vercel Blob (or `uploads/resumes/` locally), type + magic-byte validation, 4 MB limit |
 | Styling | Plain CSS (`src/app/globals.css`), responsive |
 
 ## Getting started
@@ -26,7 +26,8 @@ Requires **Node.js 20+** (Node 22 LTS recommended).
 ```bash
 npm install                 # also runs `prisma generate`
 cp .env.example .env        # on Windows: copy .env.example .env
-npm run setup               # creates the SQLite DB + seeds demo data
+                            # then paste your Postgres connection strings into .env
+npm run setup               # creates the tables + seeds demo data
 npm run dev                 # http://localhost:3000
 ```
 
@@ -101,13 +102,21 @@ uploads/resumes/          # stored resumes (git-ignored)
 
 Browse the data with `npm run db:studio`.
 
-## Switching to PostgreSQL
+## Deploying to Vercel
 
-1. In `prisma/schema.prisma` set `provider = "postgresql"`.
-2. Set `DATABASE_URL="postgresql://user:pass@localhost:5432/jobportal"` in `.env`.
-3. For case-insensitive search, add `mode: "insensitive"` to the `contains` filters in `src/app/jobs/page.tsx`.
-4. Run `npm run setup`.
+1. **Create a database.** Make a free Postgres database on [Neon](https://neon.tech) (or Supabase).
+   Copy the *pooled* connection string into `DATABASE_URL` and the *direct* one into `DIRECT_URL` in your local `.env`.
+2. **Create the tables and demo data** (run once, from your machine):
+   ```bash
+   npm run setup
+   ```
+3. **Import the repo in Vercel** (vercel.com → Add New → Project → pick `job-portal`).
+4. **Add environment variables** in Project → Settings → Environment Variables:
+   `DATABASE_URL`, `DIRECT_URL`, `SESSION_SECRET` (a new long random string).
+5. **Add resume storage.** Project → Storage → Create → **Blob**, choose **Private** access, and connect it to the project.
+   This sets `BLOB_READ_WRITE_TOKEN` automatically.
+6. **Deploy** (or redeploy so the new variables are picked up).
 
-## Deployment note
+If you change `prisma/schema.prisma` later, run `npm run db:push` again against the same database.
 
-Resumes are written to the local `uploads/` folder, which works on a VPS or your own machine. On serverless hosts (e.g. Vercel) the filesystem is not persistent — swap `src/lib/uploads.ts` for object storage such as S3, Cloudinary or Vercel Blob, and use a hosted database.
+Locally, if `BLOB_READ_WRITE_TOKEN` is not set, resumes are saved to `uploads/resumes/` instead.

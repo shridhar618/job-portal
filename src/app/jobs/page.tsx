@@ -27,18 +27,18 @@ export default async function JobsPage({ searchParams }: { searchParams: SearchP
     { status: "OPEN" },
     { OR: [{ deadline: null }, { deadline: { gte: new Date() } }] },
   ];
-  // SQLite "contains" is case-insensitive for ASCII text
+  // Postgres "contains" is case-sensitive by default, so ask for insensitive matching
   if (q) {
     and.push({
       OR: [
-        { title: { contains: q } },
-        { description: { contains: q } },
-        { skills: { contains: q } },
-        { employer: { company: { contains: q } } },
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { skills: { contains: q, mode: "insensitive" } },
+        { employer: { company: { contains: q, mode: "insensitive" } } },
       ],
     });
   }
-  if (location) and.push({ location: { contains: location } });
+  if (location) and.push({ location: { contains: location, mode: "insensitive" } });
   if (isKeyOf(JOB_TYPES, type)) and.push({ jobType: type });
   if (isKeyOf(WORK_MODES, mode)) and.push({ workMode: mode });
   if (isKeyOf(EXPERIENCE_LEVELS, exp)) and.push({ experience: exp });
