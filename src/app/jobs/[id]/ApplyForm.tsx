@@ -27,7 +27,7 @@ export default function ApplyForm({ action }: Props) {
       <div className="field">
         <label htmlFor="resume">Resume *</label>
         <input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx" required />
-        <p className="field-hint">PDF, DOC or DOCX · max 5 MB</p>
+        <p className="field-hint">PDF, DOC or DOCX · max 4 MB</p>
         {fe.resume && <p className="field-error">{fe.resume}</p>}
       </div>
 

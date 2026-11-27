@@ -42,5 +42,6 @@ export function isKeyOf<T extends Record<string, string>>(map: T, key: unknown):
   return typeof key === "string" && Object.prototype.hasOwnProperty.call(map, key);
 }
 
-export const MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
+// Vercel functions accept request bodies up to 4.5 MB, so keep uploads under that.
+export const MAX_RESUME_BYTES = 4 * 1024 * 1024; // 4 MB
 export const PAGE_SIZE = 10;

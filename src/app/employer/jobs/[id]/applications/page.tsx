@@ -33,7 +33,7 @@ export default async function JobApplicationsPage({
         jobId: id,
         ...(statusFilter ? { status: statusFilter } : {}),
         ...(search
-          ? { OR: [{ applicant: { name: { contains: search } } }, { applicant: { email: { contains: search } } }, { coverLetter: { contains: search } }] }
+          ? { OR: [{ applicant: { name: { contains: search, mode: "insensitive" } } }, { applicant: { email: { contains: search, mode: "insensitive" } } }, { coverLetter: { contains: search, mode: "insensitive" } }] }
           : {}),
       },
       orderBy: { createdAt: "desc" },
