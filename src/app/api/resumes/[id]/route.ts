@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { readResume } from "@/lib/uploads";
+import { isDemoMode } from "@/lib/prisma";
+
+// In demo mode each server instance has its own temporary data, so this route may not see
+// an application that a page on another instance just created.
+const DEMO_MISSING = "Demo mode: this resume isn't available on this server. Data is temporary in the demo.";
 
 // Only the applicant who uploaded the resume, or the employer who owns the job, can access it.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     where: { id },
     include: { job: { select: { employerId: true } } },
   });
-  if (!app) return new Response("Not found", { status: 404 });
+  if (!app) return new Response(isDemoMode ? DEMO_MISSING : "Not found", { status: 404 });
 
   const allowed = app.applicantId === user.id || app.job.employerId === user.id;
   if (!allowed) return new Response("Forbidden", { status: 403 });
@@ -22,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     file = await readResume(app.resumePath);
   } catch {
-    return new Response("File missing", { status: 404 });
+    return new Response(isDemoMode ? DEMO_MISSING : "File missing", { status: 404 });
   }
 
   // Mark as "under review" the first time the employer opens it
